@@ -7,17 +7,19 @@ export const useSocketStatus = () => {
   useEffect(() => {
     socketClient.on("connect", () => {
       setStatus(socketClient.connected);
+      console.log("Connected to server");
     });
 
     socketClient.on("disconnect", () => {
       setStatus(socketClient.connected);
+      console.log("Disconnected from server");
     });
 
     return () => {
       socketClient.off("connect");
       socketClient.off("disconnect");
     };
-  }, []);
+  }, [setStatus]);
 
   return status;
 };

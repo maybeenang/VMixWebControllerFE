@@ -5,6 +5,7 @@ import GeneralTab from "@/components/tabs/GeneralTab";
 import DraftTab from "@/components/tabs/DraftTab";
 import { InGameTab } from "@/components/tabs/InGameTab";
 import { XMLParser } from "fast-xml-parser";
+import PengaturanTab from "@/components/tabs/PengaturanTab";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -31,5 +32,10 @@ export const tabs = [
     value: "in-game",
     label: "In Game",
     content: InGameTab,
+  },
+  {
+    value: "pengaturan",
+    label: "Pengaturan",
+    content: PengaturanTab,
   },
 ];
