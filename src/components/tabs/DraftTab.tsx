@@ -16,6 +16,7 @@ import useHeroNames from "@/hooks/useHeroNames";
 import SelectHero from "../SelectHero";
 import useBanHeroes from "@/hooks/useBanHeroes";
 import usePickHeroes from "@/hooks/usePickHeroes";
+import VersusText from "../VersusText";
 
 const handleDragEnd = (event, setter) => {
   const { active, over } = event;
@@ -43,12 +44,7 @@ const DraftTab = () => {
 
   const [lock, toggleLock] = useToggle();
 
-  const heroNames = useHeroNames().map((hero) => {
-    return {
-      label: hero.label,
-      value: hero.value,
-    };
-  });
+  const heroNames = useHeroNames();
 
   useEffect(() => {
     setBlueTeamPlayers(blueTeam?.players || []);
@@ -64,6 +60,7 @@ const DraftTab = () => {
     <TabsContent value="draft">
       <div className="p-4 max-w-screen-md mx-auto text-center">
         <h1 className="text-2xl font-bold">Draft</h1>
+        <VersusText />
         <DraftCountDown />
       </div>
 

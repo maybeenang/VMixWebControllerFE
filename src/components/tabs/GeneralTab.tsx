@@ -10,6 +10,9 @@ import { useLocalStorage, useToggle } from "usehooks-ts";
 import { useJudulMatch } from "@/hooks/useJudulMatch";
 import useBlueTeam from "@/hooks/useBlueTeam";
 import useRedTeam from "@/hooks/useRedTeam";
+import VersusText from "../VersusText";
+import { sendVMixCommand } from "@/lib/utils";
+import { LockClosedIcon, LockOpen1Icon, SymbolIcon } from "@radix-ui/react-icons";
 
 const GeneralTab = () => {
   const {
@@ -50,15 +53,30 @@ const GeneralTab = () => {
     }
   };
 
+  // TODO: pisahin comand ke folder commands
+  const handleSync = () => {
+    console.log("Syncing...");
+    sendVMixCommand([
+      {
+        Function: "SetText",
+        Value: selectedBlueTeam?.label,
+        Input: "draft1.gtzip",
+        SelectedName: "NAMA TIM KIRI.Text",
+      },
+      {
+        Function: "SetText",
+        Value: selectedRedTeam?.label,
+        Input: "draft1.gtzip",
+        SelectedName: "NAMA TIM KANAN.Text",
+      },
+    ]);
+  };
+
   return (
     <TabsContent value="general">
       <div className="p-4">
         <h1 className="text-2xl font-bold text-center">General</h1>
-        <section className="max-w-max mx-auto space-x-3">
-          <span>{blueTeam?.name || "Team Blue"}</span>
-          <span>VS</span>
-          <span>{redTeam?.name || "Red Team"}</span>
-        </section>
+        <VersusText />
 
         <form className="max-w-max mx-auto mt-2" onSubmit={sendChangeJudulMatch}>
           <p className="text-center font-semibold">Judul Match</p>
@@ -82,20 +100,21 @@ const GeneralTab = () => {
           </div>
         </form>
 
-        <section className="max-w-max mx-auto mt-2 space-x-2">
+        <section className="max-w-max mx-auto mt-6 flex gap-2">
+          <Button className="space-x-2" onClick={toggleLock} variant={lock ? "default" : "outline"}>
+            {lock ? <LockOpen1Icon className="h-5 w-5" /> : <LockClosedIcon className="h-5 w-5" />}
+            <span>{lock ? "Unlock" : "Lock"}</span>
+          </Button>
           <Button
-            className="mt-4"
+            className=""
             disabled={!selectedBlueTeam || !selectedRedTeam}
             onClick={handleSwitchTeam}
             variant="outline"
           >
             Tukar
           </Button>
-          <Button className="mt-4" onClick={toggleLock} variant="outline">
-            {lock ? "Unlock" : "Lock"} Tim
-          </Button>
           <Button
-            className="mt-4"
+            className=""
             disabled={!selectedBlueTeam || !selectedRedTeam}
             onClick={(e) => {
               e.preventDefault();
@@ -109,11 +128,13 @@ const GeneralTab = () => {
             Reset
           </Button>
           <Button
-            className="mt-4"
+            className="space-x-2"
             disabled={!lock || !selectedBlueTeam || !selectedRedTeam}
             variant="default"
+            onClick={handleSync}
           >
-            Sync
+            <SymbolIcon className="h-4 w-4" />
+            <span>Sync</span>
           </Button>
         </section>
 
