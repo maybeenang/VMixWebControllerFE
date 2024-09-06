@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { useLocalStorage } from "usehooks-ts";
 
 const useBanHeroes = () => {
@@ -11,10 +12,10 @@ const useBanHeroes = () => {
     [],
   );
 
-  const clearBanHeroes = () => {
+  const clearBanHeroes = useCallback(() => {
     clearBlueBanHeroes();
     clearRedBanHeroes();
-  };
+  }, [clearBlueBanHeroes, clearRedBanHeroes]);
 
   return {
     blueBanHeroes,

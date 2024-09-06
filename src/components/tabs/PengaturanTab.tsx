@@ -9,12 +9,12 @@ import {
 } from "@/components/ui/table";
 
 import { TabsContent } from "../ui/tabs";
-import { useLocalStorage } from "usehooks-ts";
-import { Team } from "@/types/interfaces";
 import { TambahTeamDialog } from "../dialogs/TambahTeamDialog";
+import useTeams from "@/hooks/useTeams";
+import { Button } from "../ui/button";
 
 const PengaturanTab = () => {
-  const [teams] = useLocalStorage<Team[] | []>("teams", []);
+  const { teams, clearTeams } = useTeams();
 
   return (
     <TabsContent value="pengaturan">
@@ -24,7 +24,10 @@ const PengaturanTab = () => {
         <h2 className="text-xl font-bold">Daftar Tim</h2>
       </div>
       <section className="max-w-screen-xl border p-2 rounded-lg mx-auto">
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-end gap-1">
+          <Button onClick={clearTeams} variant="destructive">
+            Hapus Semua Tim
+          </Button>
           <TambahTeamDialog />
         </div>
         <Table>

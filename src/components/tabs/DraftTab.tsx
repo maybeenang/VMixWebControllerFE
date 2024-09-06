@@ -1,7 +1,5 @@
-import useBlueTeam from "@/hooks/useBlueTeam";
 import { Button } from "../ui/button";
 import { TabsContent } from "../ui/tabs";
-import useRedTeam from "@/hooks/useRedTeam";
 import { Card, CardContent, CardDescription } from "@/components/ui/card";
 
 import DraftCountDown from "../ui/draftcountdown";
@@ -17,6 +15,13 @@ import SelectHero from "../SelectHero";
 import useBanHeroes from "@/hooks/useBanHeroes";
 import usePickHeroes from "@/hooks/usePickHeroes";
 import VersusText from "../VersusText";
+import {
+  senBanHeroCommand,
+  sendPickHeroCommand,
+  sendSyncCommandDraft,
+} from "@/lib/commands/commands";
+import { useBlueTeam } from "@/providers/BlueTeamProvider";
+import { useRedTeam } from "@/providers/RedTeamProvider";
 
 const handleDragEnd = (event, setter) => {
   const { active, over } = event;
@@ -31,9 +36,30 @@ const handleDragEnd = (event, setter) => {
   }
 };
 
+const handleSetBanValue = (value, teamSide, setHeroes, index) => {
+  setHeroes((banHeroes) => {
+    const newHeroes = [...banHeroes];
+    newHeroes[index] = value;
+    return newHeroes;
+  });
+
+  senBanHeroCommand(teamSide, value, index);
+};
+
+const handleSetPickValue = (value, teamSide, setHeroes, index) => {
+  setHeroes((pickHeroes) => {
+    const newHeroes = [...pickHeroes];
+    newHeroes[index] = value;
+    return newHeroes;
+  });
+
+  sendPickHeroCommand(teamSide, value, index);
+};
+
 const DraftTab = () => {
-  const { blueTeam, setBlueTeamT } = useBlueTeam();
-  const { redTeam, setRedTeamT } = useRedTeam();
+  const { blueTeam } = useBlueTeam();
+  const { redTeam } = useRedTeam();
+
   const [blueTeamPlayers, setBlueTeamPlayers] = useState<string[]>([]);
   const [redTeamPlayers, setRedTeamPlayers] = useState<string[]>([]);
 
@@ -47,8 +73,10 @@ const DraftTab = () => {
   const heroNames = useHeroNames();
 
   useEffect(() => {
-    setBlueTeamPlayers(blueTeam?.players || []);
-    setRedTeamPlayers(redTeam?.players || []);
+    setBlueTeamPlayers(blueTeam?.players.map((player) => player.name) || []);
+
+    // reverse red team players
+    setRedTeamPlayers(redTeam?.players.map((player) => player.name) || []);
 
     return () => {
       setBlueTeamPlayers([]);
@@ -78,10 +106,8 @@ const DraftTab = () => {
         <Button
           className="mt-4"
           variant="default"
-          onClick={(e) => {
-            e.preventDefault();
-            setBlueTeamT(blueTeam ? { ...blueTeam, players: blueTeamPlayers } : null);
-            setRedTeamT(redTeam ? { ...redTeam, players: redTeamPlayers } : null);
+          onClick={() => {
+            sendSyncCommandDraft(blueTeamPlayers, redTeamPlayers);
           }}
         >
           Sync
@@ -128,13 +154,9 @@ const DraftTab = () => {
                     <SelectHero
                       options={heroNames}
                       value={blueBanHeroes[index]}
-                      setValue={(value) => {
-                        setBlueBanHeroes((heroes) => {
-                          const newHeroes = [...heroes];
-                          newHeroes[index] = value;
-                          return newHeroes;
-                        });
-                      }}
+                      setValue={(value) =>
+                        handleSetBanValue(value, "blue", setBlueBanHeroes, index)
+                      }
                     />
                   </div>
                 ))}
@@ -154,13 +176,9 @@ const DraftTab = () => {
                     <SelectHero
                       options={heroNames}
                       value={bluePickHeroes[index]}
-                      setValue={(value) => {
-                        setBluePickHeroes((heroes) => {
-                          const newHeroes = [...heroes];
-                          newHeroes[index] = value;
-                          return newHeroes;
-                        });
-                      }}
+                      setValue={(value) =>
+                        handleSetPickValue(value, "blue", setBluePickHeroes, index)
+                      }
                     />
                   </div>
                 ))}
@@ -206,13 +224,7 @@ const DraftTab = () => {
                     <SelectHero
                       options={heroNames}
                       value={redBanHeroes[index]}
-                      setValue={(value) => {
-                        setRedBanHeroes((heroes) => {
-                          const newHeroes = [...heroes];
-                          newHeroes[index] = value;
-                          return newHeroes;
-                        });
-                      }}
+                      setValue={(value) => handleSetBanValue(value, "red", setRedBanHeroes, index)}
                     />
                   </div>
                 ))}
@@ -232,13 +244,9 @@ const DraftTab = () => {
                     <SelectHero
                       options={heroNames}
                       value={redPickHeroes[index]}
-                      setValue={(value) => {
-                        setRedPickHeroes((heroes) => {
-                          const newHeroes = [...heroes];
-                          newHeroes[index] = value;
-                          return newHeroes;
-                        });
-                      }}
+                      setValue={(value) =>
+                        handleSetPickValue(value, "red", setRedPickHeroes, index)
+                      }
                     />
                   </div>
                 ))}

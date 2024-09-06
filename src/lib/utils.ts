@@ -12,9 +12,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const socketClient = io("http://localhost:3000", {
-  // autoConnect: false,
-});
+export const socketClient = io(import.meta.env.VITE_SOCKETCLIENT, {});
 
 export const xmlParser = new XMLParser();
 

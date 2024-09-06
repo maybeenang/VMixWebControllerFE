@@ -1,5 +1,5 @@
-import useBlueTeam from "@/hooks/useBlueTeam";
-import useRedTeam from "@/hooks/useRedTeam";
+import { useBlueTeam } from "@/providers/BlueTeamProvider";
+import { useRedTeam } from "@/providers/RedTeamProvider";
 
 const VersusText = () => {
   const { blueTeam } = useBlueTeam();

@@ -1,40 +1,28 @@
 import { Label } from "../ui/label";
 import { TabsContent } from "../ui/tabs";
 import Select from "react-select";
-import { Team } from "@/types/interfaces";
 
 import { useMemo } from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { useLocalStorage, useToggle } from "usehooks-ts";
+import { useToggle } from "usehooks-ts";
 import { useJudulMatch } from "@/hooks/useJudulMatch";
-import useBlueTeam from "@/hooks/useBlueTeam";
-import useRedTeam from "@/hooks/useRedTeam";
+
 import VersusText from "../VersusText";
-import { sendVMixCommand } from "@/lib/utils";
 import { LockClosedIcon, LockOpen1Icon, SymbolIcon } from "@radix-ui/react-icons";
+import { sendChangeJudulMatch, sendSyncCommandGeneral } from "@/lib/commands/commands";
+import useTeams from "@/hooks/useTeams";
+import { SelectedValue, Team } from "@/types/interfaces";
+import { useBlueTeam } from "@/providers/BlueTeamProvider";
+import { useRedTeam } from "@/providers/RedTeamProvider";
 
 const GeneralTab = () => {
-  const {
-    blueTeam,
-    setBlueTeam,
-    selectedBlueTeam,
-    setSelectedBlueTeam,
-    clearBlueTeam,
-    clearSelectedBlueTeam,
-  } = useBlueTeam();
-  const {
-    redTeam,
-    setRedTeam,
-    selectedRedTeam,
-    setSelectedRedTeam,
-    clearRedTeam,
-    clearSelectedRedTeam,
-  } = useRedTeam();
+  const { blueTeam, setBlueTeam, selectedBlueTeam, setSelectedBlueTeam } = useBlueTeam();
+  const { redTeam, setRedTeam, selectedRedTeam, setSelectedRedTeam } = useRedTeam();
 
-  const [teams] = useLocalStorage<Team[] | []>("teams", []);
+  const { teams } = useTeams();
 
-  const [judulMatch, setJudulMatch, sendChangeJudulMatch] = useJudulMatch();
+  const [judulMatch, setJudulMatch] = useJudulMatch();
 
   const [lock, toggleLock] = useToggle();
 
@@ -50,26 +38,17 @@ const GeneralTab = () => {
     if (selectedBlueTeam && selectedRedTeam) {
       setSelectedBlueTeam(selectedRedTeam);
       setSelectedRedTeam(selectedBlueTeam);
+
+      if (blueTeam && redTeam) {
+        setBlueTeam(redTeam);
+        setRedTeam(blueTeam);
+      }
     }
   };
 
   // TODO: pisahin comand ke folder commands
   const handleSync = () => {
-    console.log("Syncing...");
-    sendVMixCommand([
-      {
-        Function: "SetText",
-        Value: selectedBlueTeam?.label,
-        Input: "draft1.gtzip",
-        SelectedName: "NAMA TIM KIRI.Text",
-      },
-      {
-        Function: "SetText",
-        Value: selectedRedTeam?.label,
-        Input: "draft1.gtzip",
-        SelectedName: "NAMA TIM KANAN.Text",
-      },
-    ]);
+    sendSyncCommandGeneral(blueTeam, redTeam);
   };
 
   return (
@@ -78,7 +57,13 @@ const GeneralTab = () => {
         <h1 className="text-2xl font-bold text-center">General</h1>
         <VersusText />
 
-        <form className="max-w-max mx-auto mt-2" onSubmit={sendChangeJudulMatch}>
+        <form
+          className="max-w-max mx-auto mt-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            sendChangeJudulMatch(judulMatch ?? "");
+          }}
+        >
           <p className="text-center font-semibold">Judul Match</p>
           <Input
             type="text"
@@ -89,7 +74,7 @@ const GeneralTab = () => {
             }}
           />
         </form>
-        <form className="max-w-max mx-auto mt-2 flex gap-2" onSubmit={sendChangeJudulMatch}>
+        <form className="max-w-max mx-auto mt-2 flex gap-2">
           <div>
             <Label htmlFor="scoreBlue">Score Blue Team</Label>
             <Input type="number" className="w-full p-2 border rounded" />
@@ -118,10 +103,6 @@ const GeneralTab = () => {
             disabled={!selectedBlueTeam || !selectedRedTeam}
             onClick={(e) => {
               e.preventDefault();
-              clearBlueTeam();
-              clearRedTeam();
-              clearSelectedBlueTeam();
-              clearSelectedRedTeam();
             }}
             variant="destructive"
           >
@@ -145,7 +126,9 @@ const GeneralTab = () => {
               <Select
                 placeholder="Nama Tim Blue"
                 options={options}
-                onChange={setSelectedBlueTeam}
+                onChange={(e) => {
+                  setSelectedBlueTeam(e as SelectedValue);
+                }}
                 isDisabled={lock}
                 value={selectedBlueTeam}
               />
@@ -166,10 +149,18 @@ const GeneralTab = () => {
                         type="text"
                         id={`player${index}`}
                         name={`player${index}`}
-                        value={blueTeam ? blueTeam?.players[index] : ""}
+                        value={(blueTeam ? blueTeam?.players[index]?.name : "") || ""}
                         onChange={(e) => {
                           const newPlayer = e.target.value;
-                          setBlueTeam(newPlayer, index);
+
+                          const newBlueTeam = {
+                            ...blueTeam,
+                            players: blueTeam?.players.map((player, i) =>
+                              i === index ? { ...player, name: newPlayer } : player,
+                            ),
+                          };
+
+                          setBlueTeam(newBlueTeam as Team);
                         }}
                         className="w-full p-2 border rounded"
                       />
@@ -187,7 +178,9 @@ const GeneralTab = () => {
                 isDisabled={lock}
                 placeholder="Nama Tim Red"
                 options={options}
-                onChange={setSelectedRedTeam}
+                onChange={(e) => {
+                  setSelectedRedTeam(e as SelectedValue);
+                }}
                 value={selectedRedTeam}
               />
             </div>
@@ -207,10 +200,18 @@ const GeneralTab = () => {
                         type="text"
                         id={`player${index}`}
                         name={`player${index}`}
-                        value={redTeam ? redTeam?.players[index] : ""}
+                        value={(redTeam ? redTeam?.players[index]?.name : "") || ""}
                         onChange={(e) => {
                           const newPlayer = e.target.value;
-                          setRedTeam(newPlayer, index);
+
+                          const newRedTeam = {
+                            ...redTeam,
+                            players: redTeam?.players.map((player, i) =>
+                              i === index ? { ...player, name: newPlayer } : player,
+                            ),
+                          };
+
+                          setRedTeam(newRedTeam as Team);
                         }}
                         className="w-full p-2 border rounded"
                       />

@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn, socketClient } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,8 +11,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useContext, useState } from "react";
-import { useLocalStorage } from "usehooks-ts";
-import { Team } from "@/types/interfaces";
 import { createContext } from "react";
 
 interface DialogContextType {
@@ -49,7 +47,7 @@ export const TambahTeamDialog = () => {
 };
 
 function TeamForm({ className }: React.ComponentProps<"form">) {
-  const [teams, setTeams] = useLocalStorage<Team[] | []>("teams", []);
+  // const [teams, setTeams] = useLocalStorage<Team[] | []>("teams", []);
   const { setOpen } = useContext<DialogContextType>(DialogContext);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -68,14 +66,14 @@ function TeamForm({ className }: React.ComponentProps<"form">) {
       .filter((key) => key.startsWith("player"))
       .map((key) => formData.get(key));
 
-    const newTeam: Team = {
-      id: Math.floor(Math.random() * 999) + 1,
-      alias: aliasTim,
+    const newTeam = {
       name: namaTim,
-      players: players.filter((player) => player !== null) as string[],
+      alias: aliasTim,
+      players: players as string[],
     };
 
-    setTeams([...teams, newTeam]);
+    socketClient.emit("addTeam", newTeam);
+
     form.reset();
     setOpen(false);
   };
