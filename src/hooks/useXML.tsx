@@ -1,18 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { socketClient } from "@/lib/utils";
+import { useLocalStorage } from "usehooks-ts";
 
 const useXML = () => {
-  const [xml, setXml] = useState<string>("");
+  const [xml, setXml] = useLocalStorage("xml", "");
 
   useEffect(() => {
     socketClient.on("xml", (data) => {
+      if (!data) return;
+      if (data === xml) return;
+
+      console.log("XML");
       setXml(data);
     });
 
     return () => {
       socketClient.off("xml");
     };
-  }, [setXml]);
+  }, [setXml, xml]);
 
   return xml;
 };

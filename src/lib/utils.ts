@@ -7,6 +7,9 @@ import { InGameTab } from "@/components/tabs/InGameTab";
 import { XMLParser } from "fast-xml-parser";
 import PengaturanTab from "@/components/tabs/PengaturanTab";
 import { vMixApiFunctionCommand } from "node-vmix";
+import ResultTab from "@/components/tabs/ResultTab";
+import MvpTab from "@/components/tabs/MvpTab";
+import WaitingTab from "@/components/tabs/WaitingTab";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -24,6 +27,11 @@ export const sendVMixCommand = (
 
 export const tabs = [
   {
+    value: "waiting",
+    label: "Waiting",
+    content: WaitingTab,
+  },
+  {
     value: "general",
     label: "General",
     content: GeneralTab,
@@ -37,6 +45,16 @@ export const tabs = [
     value: "in-game",
     label: "In Game",
     content: InGameTab,
+  },
+  {
+    value: "mvp",
+    label: "MVP",
+    content: MvpTab,
+  },
+  {
+    value: "result",
+    label: "Result",
+    content: ResultTab,
   },
   {
     value: "pengaturan",

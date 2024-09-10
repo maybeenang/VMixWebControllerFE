@@ -43,16 +43,24 @@ const PengaturanTab = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {teams.map((team, index) => (
-              <TableRow key={team.id}>
-                <TableCell>{index + 1}</TableCell>
-                <TableCell>{team.name}</TableCell>
-                <TableCell>{team.alias}</TableCell>
-                {team.players.map((player, index) => (
-                  <TableCell key={index}>{player}</TableCell>
-                ))}
+            {teams.length > 0 ? (
+              teams.map((team, index) => (
+                <TableRow key={team.id}>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{team.name}</TableCell>
+                  <TableCell>{team.alias}</TableCell>
+                  {team?.players?.map((player, index) => (
+                    <TableCell key={index}>{player?.name}</TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center">
+                  Belum ada tim
+                </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </section>

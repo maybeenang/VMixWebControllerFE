@@ -5,32 +5,43 @@ import Select from "react-select";
 import { useMemo } from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { useToggle } from "usehooks-ts";
 import { useJudulMatch } from "@/hooks/useJudulMatch";
 
 import VersusText from "../VersusText";
-import { LockClosedIcon, LockOpen1Icon, SymbolIcon } from "@radix-ui/react-icons";
-import { sendChangeJudulMatch, sendSyncCommandGeneral } from "@/lib/commands/commands";
+import { SymbolIcon } from "@radix-ui/react-icons";
+import {
+  sendChangeGameBerapa,
+  sendChangeJudulMatch,
+  sendChangeScore,
+  sendChangeTextBerjalan,
+  sendSyncCommandGeneral,
+} from "@/lib/commands/commands";
 import useTeams from "@/hooks/useTeams";
 import { SelectedValue, Team } from "@/types/interfaces";
 import { useBlueTeam } from "@/providers/BlueTeamProvider";
 import { useRedTeam } from "@/providers/RedTeamProvider";
+import { socketClient } from "@/lib/utils";
+import useScore from "@/hooks/useScore";
+import useGameBerapa from "@/hooks/useGameBerapa";
+import useTextBerjalan from "@/hooks/useTextBerjalan";
 
 const GeneralTab = () => {
   const { blueTeam, setBlueTeam, selectedBlueTeam, setSelectedBlueTeam } = useBlueTeam();
   const { redTeam, setRedTeam, selectedRedTeam, setSelectedRedTeam } = useRedTeam();
 
+  const { scores, setScores } = useScore();
+
   const { teams } = useTeams();
 
   const [judulMatch, setJudulMatch] = useJudulMatch();
-
-  const [lock, toggleLock] = useToggle();
+  const [gameBerapa, setGameBerapa] = useGameBerapa();
+  const [textBerjalan, setTextBerlajan] = useTextBerjalan();
 
   const options = useMemo(() => {
     return teams.map((team) => ({
       value: team.id,
       label: team.name,
-      isDisabled: selectedBlueTeam?.value == team.id || selectedRedTeam?.value == team.id,
+      isDisabled: selectedBlueTeam?.value == team?.name || selectedRedTeam?.value == team?.name,
     }));
   }, [selectedBlueTeam?.value, selectedRedTeam?.value, teams]);
 
@@ -48,6 +59,8 @@ const GeneralTab = () => {
 
   // TODO: pisahin comand ke folder commands
   const handleSync = () => {
+    if (!socketClient.connected) return;
+
     sendSyncCommandGeneral(blueTeam, redTeam);
   };
 
@@ -57,6 +70,24 @@ const GeneralTab = () => {
         <h1 className="text-2xl font-bold text-center">General</h1>
         <VersusText />
 
+        <form
+          className="mx-auto mt-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            sendChangeTextBerjalan(textBerjalan ?? "");
+          }}
+        >
+          <p className="text-center font-semibold">Text Berjalan</p>
+          <textarea
+            className="w-full p-2 border rounded"
+            value={textBerjalan ?? ""}
+            onChange={(e) => {
+              setTextBerlajan(e.target.value);
+            }}
+          />
+
+          <button>Kirim</button>
+        </form>
         <form
           className="max-w-max mx-auto mt-2"
           onSubmit={(e) => {
@@ -74,22 +105,68 @@ const GeneralTab = () => {
             }}
           />
         </form>
-        <form className="max-w-max mx-auto mt-2 flex gap-2">
+
+        <form
+          className="max-w-max mx-auto mt-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            sendChangeGameBerapa(gameBerapa ?? "");
+          }}
+        >
+          <p className="text-center font-semibold">Game Berapa</p>
+          <Input
+            type="text"
+            className="w-full p-2 border rounded"
+            value={gameBerapa ?? ""}
+            onChange={(e) => {
+              setGameBerapa(e.target.value);
+            }}
+          />
+        </form>
+        <form
+          className="max-w-max mx-auto mt-2 flex gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            sendChangeScore(scores);
+          }}
+        >
           <div>
             <Label htmlFor="scoreBlue">Score Blue Team</Label>
-            <Input type="number" className="w-full p-2 border rounded" />
+            <Input
+              type="number"
+              className="w-full p-2 border rounded"
+              value={scores?.blue || 0}
+              max={3}
+              min={0}
+              onChange={(e) => {
+                setScores({
+                  blue: Number(e.target.value),
+                  red: scores.red,
+                });
+              }}
+            />
           </div>
           <div>
             <Label htmlFor="scoreRed">Score Red Team</Label>
-            <Input type="number" className="w-full p-2 border rounded" />
+            <Input
+              type="number"
+              className="w-full p-2 border rounded"
+              value={scores?.red || 0}
+              max={3}
+              min={0}
+              onChange={(e) => {
+                setScores({
+                  blue: scores.blue,
+                  red: Number(e.target.value),
+                });
+              }}
+            />
           </div>
+
+          <Button className="space-x-2 hidden"></Button>
         </form>
 
         <section className="max-w-max mx-auto mt-6 flex gap-2">
-          <Button className="space-x-2" onClick={toggleLock} variant={lock ? "default" : "outline"}>
-            {lock ? <LockOpen1Icon className="h-5 w-5" /> : <LockClosedIcon className="h-5 w-5" />}
-            <span>{lock ? "Unlock" : "Lock"}</span>
-          </Button>
           <Button
             className=""
             disabled={!selectedBlueTeam || !selectedRedTeam}
@@ -110,7 +187,7 @@ const GeneralTab = () => {
           </Button>
           <Button
             className="space-x-2"
-            disabled={!lock || !selectedBlueTeam || !selectedRedTeam}
+            disabled={!selectedBlueTeam || !selectedRedTeam}
             variant="default"
             onClick={handleSync}
           >
@@ -128,8 +205,10 @@ const GeneralTab = () => {
                 options={options}
                 onChange={(e) => {
                   setSelectedBlueTeam(e as SelectedValue);
+                  setBlueTeam(
+                    teams.find((team) => team.id === Number((e as SelectedValue).value)) as Team,
+                  );
                 }}
-                isDisabled={lock}
                 value={selectedBlueTeam}
               />
             </div>
@@ -145,8 +224,9 @@ const GeneralTab = () => {
                     <div key={index}>
                       <Label htmlFor={`player${index}`}>Player {index + 1}</Label>
                       <Input
-                        disabled={lock || !selectedBlueTeam}
+                        disabled={!selectedBlueTeam}
                         type="text"
+                        autoComplete="off"
                         id={`player${index}`}
                         name={`player${index}`}
                         value={(blueTeam ? blueTeam?.players[index]?.name : "") || ""}
@@ -175,11 +255,14 @@ const GeneralTab = () => {
             <div className="grid w-full max-w-sm items-center gap-1.5">
               <Label htmlFor="timRed">Nama Tim Red</Label>
               <Select
-                isDisabled={lock}
                 placeholder="Nama Tim Red"
                 options={options}
                 onChange={(e) => {
                   setSelectedRedTeam(e as SelectedValue);
+
+                  setRedTeam(
+                    teams.find((team) => team.id === Number((e as SelectedValue).value)) as Team,
+                  );
                 }}
                 value={selectedRedTeam}
               />
@@ -196,8 +279,9 @@ const GeneralTab = () => {
                     <div key={index}>
                       <Label htmlFor={`player${index}`}>Player {index + 1}</Label>
                       <Input
-                        disabled={lock || !selectedRedTeam}
+                        disabled={!selectedRedTeam}
                         type="text"
+                        autoComplete="off"
                         id={`player${index}`}
                         name={`player${index}`}
                         value={(redTeam ? redTeam?.players[index]?.name : "") || ""}
